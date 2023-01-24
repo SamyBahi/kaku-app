@@ -88,9 +88,9 @@ const resizeCanvas = () => {
     // canvas.height = window.innerHeight;
     // canvas.width = window.innerWidth;
     // context.putImageData(temp, 0, 0)
-    canvas.height = window.innerHeight + 500;
-    canvas.width = window.innerWidth + 500;
-
+    canvas.height = window.innerHeight + 200;
+    canvas.width = window.innerWidth + 200;
+    context.putImageData(canvasMem[canvasMem.length - 1], 0, 0);
 }
 
 const getBrushSize = () => {
@@ -208,6 +208,9 @@ fillButton.addEventListener('click', activateFillTool)
 pencilButton.addEventListener('click', activatePencilTool)
 eraserButton.addEventListener('click', activateEraser)
 undoButton.addEventListener("click", Undo);
+window.onresize = () => {
+    resizeCanvas();
+}
 
 
 

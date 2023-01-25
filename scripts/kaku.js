@@ -1,7 +1,6 @@
 //variables
 const canvas = document.querySelector("canvas");
 const context = canvas.getContext("2d", { willReadFrequently: true });
-const memCanvas = document.createElement("canvas");
 const brushSize = document.querySelector("#brush-size");
 const reset = document.querySelector("#reset-canvas");
 const saveButton = document.querySelector("#save-image");
@@ -9,13 +8,11 @@ const fillButton = document.querySelector("#fill");
 const pencilButton = document.querySelector("#pencil");
 const eraserButton = document.querySelector("#eraser");
 const undoButton = document.querySelector("#undo");
+//stores all changes made by the user on the canvas so he can comebacks
 let canvasMem = [];
 let painting = false;
 let brushValue = document.querySelector("#brush-value");
 let brushColor = document.querySelector("#color-picker");
-
-
-
 
 
 const startPainting = (e) => {
@@ -25,10 +22,12 @@ const startPainting = (e) => {
     }
 }
 
+
 const stopPainting = () => {
     painting = false;
     context.beginPath();
 }
+
 
 const storeCanvas = () => {
     let temp = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -36,6 +35,7 @@ const storeCanvas = () => {
 }
 
 
+//get mouse position on the screen
 const getXY = (canvas, event) => {
     var rect = canvas.getBoundingClientRect(), /// get absolute rect. of canvas
         x = event.clientX - rect.left,         /// adjust for x
@@ -43,6 +43,7 @@ const getXY = (canvas, event) => {
 
     return { x: x, y: y };
 }
+
 
 const draw = (e) => {
     if (!painting) return;
@@ -59,6 +60,9 @@ const draw = (e) => {
     context.moveTo(x, y);
 }
 
+
+//Same function as draw but to erase. The only thing that changes is the color of the stroke
+//that is forced to the background color of the canvas
 const drawErase = (e) => {
     if (!painting) return;
     context.lineWidth = getBrushSize();
@@ -75,43 +79,38 @@ const drawErase = (e) => {
 }
 
 
+//Used by the custom input range to choose the size of the brush
+//The dark background follows the pointer and the size innerHTML is updated dynamically
 const followSliderPointer = () => {
     let size = brushSize.value;
     let color = 'linear-gradient(90deg, #4C566A ' + size + '%, #D8DEE9 ' + size + '%)';
     brushSize.style.background = color;
     brushValue.innerHTML = size;
-
 }
+
 
 const resizeCanvas = () => {
-    // const temp = context.getImageData(0, 0, window.innerWidth, window.innerHeight)
-    // canvas.height = window.innerHeight;
-    // canvas.width = window.innerWidth;
-    // context.putImageData(temp, 0, 0)
-    canvas.height = window.innerHeight + 200;
-    canvas.width = window.innerWidth + 200;
-    context.putImageData(canvasMem[canvasMem.length - 1], 0, 0);
+    canvas.height = window.innerHeight + 300;
+    canvas.width = window.innerWidth + 300;
+    //To avoid canvas from clearing after resize
+    if (canvasMem.length != 0) {
+        context.putImageData(canvasMem[canvasMem.length - 1], 0, 0);
+    }
 }
+
 
 const getBrushSize = () => {
     return brushSize.value;
 }
 
+
 const getBrushColor = () => {
     return brushColor.value;
 }
 
-const addListener = (elem, action, fct) => {
-    elem.addEventListener(action, fct)
-}
-const removeListener = (elem, action, fct) => {
-    elem.removeEventListener(action, fct)
-}
 
-function fillCanvasBackgroundWithColor(color) {
-    // Get the 2D drawing context from the provided canvas.
-    // We're going to modify the context state, so it's
-    // good practice to save the current state first.
+//used to have a background on the saved image when save function is used
+const fillCanvasBackgroundWithColor = (color) => {
     context.save();
 
     // Normally when you draw on a canvas, the new drawing
@@ -134,6 +133,7 @@ function fillCanvasBackgroundWithColor(color) {
     context.restore();
 }
 
+
 const saveCanvas = () => {
     fillCanvasBackgroundWithColor('#D8DEE9');
     const link = document.createElement('a');
@@ -143,11 +143,13 @@ const saveCanvas = () => {
     link.delete;
 }
 
+
 const fillCanvas = () => {
     context.fillStyle = getBrushColor();
     context.fillRect(0, 0, canvas.width, canvas.height);
     storeCanvas();
 }
+
 
 const activateFillTool = () => {
     canvas.removeEventListener('mousedown', startPainting);
@@ -155,6 +157,7 @@ const activateFillTool = () => {
     canvas.removeEventListener('mousemove', drawErase);
     canvas.addEventListener('click', fillCanvas);
 }
+
 
 const activatePencilTool = () => {
     canvas.removeEventListener('click', fillCanvas);
@@ -165,6 +168,7 @@ const activatePencilTool = () => {
     canvas.addEventListener('mousemove', draw);
 }
 
+
 const activateEraser = () => {
     canvas.removeEventListener('mousedown', draw);
     canvas.removeEventListener('mousemove', draw);
@@ -174,17 +178,15 @@ const activateEraser = () => {
     canvas.addEventListener('mousedown', startPainting);
 }
 
+
 const Undo = () => {
-    // remove the last path from the paths array
     canvasMem.pop();
     context.clearRect(0, 0, canvas.width, canvas.height);
     if (canvasMem.length != 0) {
-
         context.putImageData(canvasMem[canvasMem.length - 1], 0, 0);
     }
-    // draw all the paths in the paths array
-
 }
+
 
 const clearCanvas = () => {
     storeCanvas();
@@ -192,25 +194,19 @@ const clearCanvas = () => {
 }
 
 
-
-
-canvas.addEventListener('mousedown', startPainting)
-canvas.addEventListener('mousedown', draw)
-canvas.addEventListener('mouseup', stopPainting)
-canvas.addEventListener('mouseup', storeCanvas)
-canvas.addEventListener('mousemove', draw)
-canvas.addEventListener('mouseout', stopPainting)
+//adding event listeners
+canvas.addEventListener('mousedown', startPainting);
+canvas.addEventListener('mousedown', draw);
+canvas.addEventListener('mouseup', stopPainting);
+canvas.addEventListener('mouseup', storeCanvas);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseout', stopPainting);
 brushSize.addEventListener('mousemove', followSliderPointer)
 window.addEventListener("load", resizeCanvas);
+window.addEventListener("resize", resizeCanvas);
 reset.addEventListener('click', clearCanvas);
 saveButton.addEventListener('click', saveCanvas);
 fillButton.addEventListener('click', activateFillTool)
 pencilButton.addEventListener('click', activatePencilTool)
 eraserButton.addEventListener('click', activateEraser)
 undoButton.addEventListener("click", Undo);
-window.onresize = () => {
-    resizeCanvas();
-}
-
-
-
